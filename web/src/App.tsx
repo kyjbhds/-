@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import StudentList from './pages/StudentList';
@@ -34,6 +35,7 @@ export default function App() {
           <Route path="feishu-bot" element={<FeishuBotAssistant />} />
         </Route>
       </Routes>
+      <Analytics />
     </BrowserRouter>
   );
 }
