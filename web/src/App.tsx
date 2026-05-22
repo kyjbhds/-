@@ -1,5 +1,7 @@
+import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
+import { Login, isAuthenticated } from './components/Login';
 import Dashboard from './pages/Dashboard';
 import StudentList from './pages/StudentList';
 import StudentDetail from './pages/StudentDetail';
@@ -15,6 +17,30 @@ import DataBackup from './pages/DataBackup';
 import FeishuBotAssistant from './pages/FeishuBotAssistant';
 
 export default function App() {
+  const [authenticated, setAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setAuthenticated(isAuthenticated());
+    setLoading(false);
+  }, []);
+
+  const handleLogin = () => {
+    setAuthenticated(true);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!authenticated) {
+    return <Login onLogin={handleLogin} />;
+  }
+
   return (
     <BrowserRouter>
       <Routes>

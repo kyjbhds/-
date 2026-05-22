@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, BookOpen, FileText, Brain, GraduationCap, PlusCircle, Sparkles, Database, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, Users, BookOpen, FileText, Brain, GraduationCap, PlusCircle, Sparkles, Database, MessageSquare, LogOut } from 'lucide-react';
+import { logout } from './Login';
 
 const navItems = [
   { path: '/', label: '仪表盘', icon: LayoutDashboard },
@@ -17,12 +18,18 @@ const navItems = [
 export default function Sidebar() {
   const location = useLocation();
 
+  const handleLogout = () => {
+    if (confirm('确定要退出登录吗？')) {
+      logout();
+    }
+  };
+
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 min-h-screen">
+    <aside className="w-64 bg-white border-r border-gray-200 min-h-screen flex flex-col">
       <div className="p-6">
         <h1 className="text-xl font-bold text-gray-900">学生成长系统</h1>
       </div>
-      <nav className="px-4 space-y-1">
+      <nav className="px-4 space-y-1 flex-1">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path || location.pathname.startsWith(item.path + '/');
@@ -42,6 +49,15 @@ export default function Sidebar() {
           );
         })}
       </nav>
+      <div className="px-4 pb-6">
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-red-600 transition-colors"
+        >
+          <LogOut size={20} />
+          <span>退出登录</span>
+        </button>
+      </div>
     </aside>
   );
 }
