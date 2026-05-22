@@ -1,13 +1,27 @@
 const BASE_TOKEN = import.meta.env.VITE_BASE_TOKEN;
+const FEISHU_PAT = import.meta.env.VITE_FEISHU_PAT;
 
 async function baseRequest(endpoint: string, options: RequestInit = {}) {
-  const url = `/api/bitable/apps/${BASE_TOKEN}${endpoint}`;
+  // 检测是否在 Vercel 环境（生产环境使用 API Route）
+  const isProduction = import.meta.env.PROD;
+  const baseUrl = isProduction ? '/api/bitable-proxy' : '/api/bitable';
+  
+  const url = `${baseUrl}/apps/${BASE_TOKEN}${endpoint}`;
   console.log('Request URL:', url);
+  
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  
+  // 开发环境直接传递 PAT，生产环境由 API Route 处理
+  if (!isProduction && FEISHU_PAT) {
+    headers['Authorization'] = `Bearer ${FEISHU_PAT}`;
+  }
   
   const response = await fetch(url, {
     ...options,
     headers: {
-      'Content-Type': 'application/json',
+      ...headers,
       ...options.headers,
     },
   });
