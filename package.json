@@ -4,6 +4,11 @@
   "version": "1.0.0",
   "scripts": {
     "build": "cd web && npm install && npm run build",
-    "dev": "cd web && npm run dev"
+    "dev": "cd web && npm run dev",
+    "deploy": "wrangler deploy",
+    "preview": "wrangler dev"
+  },
+  "devDependencies": {
+    "wrangler": "^4.93.1"
   }
 }
