@@ -1,8 +1,5 @@
 import { useState } from 'react';
 import { Lock, User, Eye, EyeOff } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
 
 interface LoginProps {
   onLogin: (password: string) => void;
@@ -16,7 +13,7 @@ export function Login({ onLogin }: LoginProps) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
     setLoading(true);
@@ -51,12 +48,12 @@ export function Login({ onLogin }: LoginProps) {
                 <div className="absolute left-3 top-1/2 -translate-y-1/2">
                   <User className="w-5 h-5 text-gray-400" />
                 </div>
-                <Input
+                <input
                   type="text"
                   placeholder="用户名"
                   value="admin"
                   disabled
-                  className="pl-10 bg-gray-50 cursor-not-allowed"
+                  className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed focus:outline-none"
                 />
               </div>
 
@@ -64,12 +61,12 @@ export function Login({ onLogin }: LoginProps) {
                 <div className="absolute left-3 top-1/2 -translate-y-1/2">
                   <Lock className="w-5 h-5 text-gray-400" />
                 </div>
-                <Input
+                <input
                   type={showPassword ? 'text' : 'password'}
                   placeholder="密码"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10"
+                  className="w-full pl-10 pr-12 py-3 rounded-lg border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none transition-colors"
                   autoComplete="off"
                 />
                 <button
@@ -87,20 +84,20 @@ export function Login({ onLogin }: LoginProps) {
                 </div>
               )}
 
-              <Button
+              <button
                 type="submit"
                 disabled={loading || !password}
-                className="w-full h-12 text-lg bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition-all duration-300"
+                className="w-full h-12 text-lg bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? (
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-center gap-2">
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     登录中...
                   </div>
                 ) : (
                   '登录'
                 )}
-              </Button>
+              </button>
             </div>
           </form>
 
