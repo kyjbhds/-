@@ -1,10 +1,21 @@
 const BASE_TOKEN = import.meta.env.VITE_BASE_TOKEN;
-const FEISHU_PAT = import.meta.env.VITE_FEISHU_PAT;
+const ALIYUN_FC_URL = import.meta.env.VITE_ALIYUN_FC_URL || '';
 
 async function baseRequest(endpoint: string, options: RequestInit = {}) {
-  // 检测是否在 Vercel 环境（生产环境使用 API Route）
   const isProduction = import.meta.env.PROD;
-  const baseUrl = isProduction ? '/api/bitable-proxy' : '/api/bitable';
+  
+  let baseUrl: string;
+  
+  if (isProduction && ALIYUN_FC_URL) {
+    // 阿里云函数计算代理
+    baseUrl = ALIYUN_FC_URL;
+  } else if (isProduction) {
+    // 生产环境相对路径代理（Vercel）
+    baseUrl = '/api/bitable-proxy';
+  } else {
+    // 开发环境代理
+    baseUrl = '/api/bitable';
+  }
   
   const url = `${baseUrl}/apps/${BASE_TOKEN}${endpoint}`;
   console.log('Request URL:', url);
@@ -12,11 +23,6 @@ async function baseRequest(endpoint: string, options: RequestInit = {}) {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
-  
-  // 开发环境直接传递 PAT，生产环境由 API Route 处理
-  if (!isProduction && FEISHU_PAT) {
-    headers['Authorization'] = `Bearer ${FEISHU_PAT}`;
-  }
   
   const response = await fetch(url, {
     ...options,
