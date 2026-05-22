@@ -13,12 +13,5 @@
       "src": "/(.*)",
       "dest": "/web/dist/$1"
     }
-  ],
-  "env": {
-    "VITE_BASE_TOKEN": "@vite_base_token",
-    "VITE_GLM_API_KEY": "@vite_glm_api_key",
-    "VITE_FEISHU_APP_ID": "@vite_feishu_app_id",
-    "VITE_FEISHU_APP_SECRET": "@vite_feishu_app_secret",
-    "VITE_FEISHU_CHAT_ID": "@vite_feishu_chat_id"
-  }
+  ]
 }
