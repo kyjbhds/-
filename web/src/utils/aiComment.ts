@@ -7,7 +7,7 @@ export async function generateStudentComment(
   weaknesses: string[],
   customPrompt?: string
 ): Promise<string> {
-  const apiKey = import.meta.env.VITE_GLM_API_KEY || import.meta.env.VITE_OPENAI_API_KEY || '';
+  const apiKey = import.meta.env.VITE_GLM_API_KEY || '';
   if (!apiKey) {
     throw new Error('请先配置 GLM API Key');
   }

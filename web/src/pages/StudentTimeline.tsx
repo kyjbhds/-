@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
+import type { FC } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Calendar, BookOpen, Star, TrendingUp, Award, Clock, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Calendar, BookOpen, Star, TrendingUp, Award, Clock, ChevronRight, LucideIcon } from 'lucide-react';
 import { listRecords } from '../utils/baseApi';
 import { Student, Lesson, StudentKnowledge, Milestone } from '../types';
 
@@ -13,7 +14,7 @@ interface TimelineEvent {
   description: string;
   score?: number;
   subject?: string;
-  icon: React.ElementType;
+  icon: LucideIcon;
   color: string;
   bgColor: string;
   details?: Record<string, string>;
@@ -93,7 +94,7 @@ export default function StudentTimeline() {
       });
 
       studentSK.forEach((sk: StudentKnowledge) => {
-        const levelMap: Record<string, { color: string; bg: string; icon: React.ElementType }> = {
+        const levelMap: Record<string, { color: string; bg: string; icon: LucideIcon }> = {
           '未接触': { color: 'text-gray-600', bg: 'bg-gray-100', icon: Clock },
           '初学': { color: 'text-yellow-600', bg: 'bg-yellow-100', icon: Star },
           '巩固': { color: 'text-orange-600', bg: 'bg-orange-100', icon: TrendingUp },
@@ -311,7 +312,7 @@ export default function StudentTimeline() {
   );
 }
 
-function StatCard({ label, value, icon: Icon, color }: { label: string; value: string; icon: React.ElementType; color: string }) {
+function StatCard({ label, value, icon: Icon, color }: { label: string; value: string; icon: LucideIcon; color: string }) {
   const colorMap: Record<string, string> = {
     blue: 'bg-blue-50 text-blue-600',
     yellow: 'bg-yellow-50 text-yellow-600',

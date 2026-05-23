@@ -7,7 +7,7 @@ export interface AIRecognitionResult {
 }
 
 // GLM-4-Flash API 配置
-const GLM_API_KEY = import.meta.env.VITE_GLM_API_KEY || import.meta.env.VITE_OPENAI_API_KEY || '';
+const GLM_API_KEY = import.meta.env.VITE_GLM_API_KEY || '';
 const GLM_API_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
 
 export async function recognizeLessonImage(imageBase64: string): Promise<AIRecognitionResult> {
