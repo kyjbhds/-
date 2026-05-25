@@ -34,9 +34,29 @@ jobs:
         run: |
           aliyun configure set --access-key-id ${{ secrets.ALIYUN_ACCESS_KEY_ID }} --access-key-secret ${{ secrets.ALIYUN_ACCESS_KEY_SECRET }} --region cn-hangzhou
           
-      - name: Deploy to OSS
+      - name: Deploy to OSS with correct Content-Type
         run: |
           cd web/dist
-          for file in $(find . -type f); do
-            aliyun oss cp "$file" "oss://myvip/${file#./}" --force
+          # 上传HTML文件，设置Content-Type和Content-Disposition
+          for file in $(find . -name "*.html" -type f); do
+            target="${file#./}"
+            aliyun oss cp "$file" "oss://myvip/$target" --force --meta "Content-Type:text/html; charset=utf-8#Content-Disposition:inline"
+          done
+          
+          # 上传JS文件
+          for file in $(find . -name "*.js" -type f); do
+            target="${file#./}"
+            aliyun oss cp "$file" "oss://myvip/$target" --force --meta "Content-Type:application/javascript; charset=utf-8#Content-Disposition:inline"
+          done
+          
+          # 上传CSS文件
+          for file in $(find . -name "*.css" -type f); do
+            target="${file#./}"
+            aliyun oss cp "$file" "oss://myvip/$target" --force --meta "Content-Type:text/css; charset=utf-8#Content-Disposition:inline"
+          done
+          
+          # 上传其他文件
+          for file in $(find . -type f ! -name "*.html" ! -name "*.js" ! -name "*.css"); do
+            target="${file#./}"
+            aliyun oss cp "$file" "oss://myvip/$target" --force
           done
