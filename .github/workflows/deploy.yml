@@ -24,10 +24,19 @@ jobs:
       - name: Build
         run: cd web && npm run build
         
-      - name: Deploy to OSS
-        env:
-          ALIYUN_ACCESS_KEY_ID: ${{ secrets.ALIYUN_ACCESS_KEY_ID }}
-          ALIYUN_ACCESS_KEY_SECRET: ${{ secrets.ALIYUN_ACCESS_KEY_SECRET }}
+      - name: Setup Aliyun CLI
         run: |
-          cd web
-          npx ali-oss-deploy dist/ myvip oss-cn-hangzhou.aliyuncs.com --accessKeyId $ALIYUN_ACCESS_KEY_ID --accessKeySecret $ALIYUN_ACCESS_KEY_SECRET
+          curl -O https://aliyuncli.alicdn.com/aliyun-cli-linux-latest-amd64.tgz
+          tar -xvf aliyun-cli-linux-latest-amd64.tgz
+          sudo mv aliyun /usr/local/bin/
+          
+      - name: Configure Aliyun CLI
+        run: |
+          aliyun configure set --access-key-id ${{ secrets.ALIYUN_ACCESS_KEY_ID }} --access-key-secret ${{ secrets.ALIYUN_ACCESS_KEY_SECRET }} --region cn-hangzhou
+          
+      - name: Deploy to OSS
+        run: |
+          cd web/dist
+          for file in $(find . -type f); do
+            aliyun oss cp "$file" "oss://myvip/${file#./}" --force
+          done
