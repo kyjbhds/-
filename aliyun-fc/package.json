@@ -3,5 +3,8 @@
   "version": "1.0.0",
   "description": "飞书Base API代理",
   "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
   "dependencies": {}
 }
