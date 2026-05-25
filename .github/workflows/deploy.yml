@@ -24,39 +24,21 @@ jobs:
       - name: Build
         run: cd web && npm run build
         
-      - name: Setup Aliyun CLI
+      - name: Install ossutil
         run: |
-          curl -O https://aliyuncli.alicdn.com/aliyun-cli-linux-latest-amd64.tgz
-          tar -xvf aliyun-cli-linux-latest-amd64.tgz
-          sudo mv aliyun /usr/local/bin/
+          wget https://gosspublic.alicdn.com/ossutil/1.7.19/ossutil64
+          chmod 755 ossutil64
+          sudo mv ossutil64 /usr/local/bin/ossutil
           
-      - name: Configure Aliyun CLI
+      - name: Configure ossutil
         run: |
-          aliyun configure set --access-key-id ${{ secrets.ALIYUN_ACCESS_KEY_ID }} --access-key-secret ${{ secrets.ALIYUN_ACCESS_KEY_SECRET }} --region cn-hangzhou
+          ossutil config -e oss-cn-hangzhou.aliyuncs.com -i ${{ secrets.ALIYUN_ACCESS_KEY_ID }} -k ${{ secrets.ALIYUN_ACCESS_KEY_SECRET }}
           
-      - name: Deploy to OSS with correct Content-Type
+      - name: Deploy to OSS with correct headers
         run: |
           cd web/dist
-          # 上传HTML文件，设置Content-Type和Content-Disposition
-          for file in $(find . -name "*.html" -type f); do
-            target="${file#./}"
-            aliyun oss cp "$file" "oss://myvip/$target" --force --meta "Content-Type:text/html; charset=utf-8#Content-Disposition:inline"
-          done
-          
-          # 上传JS文件
-          for file in $(find . -name "*.js" -type f); do
-            target="${file#./}"
-            aliyun oss cp "$file" "oss://myvip/$target" --force --meta "Content-Type:application/javascript; charset=utf-8#Content-Disposition:inline"
-          done
-          
-          # 上传CSS文件
-          for file in $(find . -name "*.css" -type f); do
-            target="${file#./}"
-            aliyun oss cp "$file" "oss://myvip/$target" --force --meta "Content-Type:text/css; charset=utf-8#Content-Disposition:inline"
-          done
-          
-          # 上传其他文件
-          for file in $(find . -type f ! -name "*.html" ! -name "*.js" ! -name "*.css"); do
-            target="${file#./}"
-            aliyun oss cp "$file" "oss://myvip/$target" --force
-          done
+          # 上传所有文件，设置正确的Content-Type
+          ossutil cp -r . oss://myvip/ --force --include "*.html" --meta "Content-Type:text/html; charset=utf-8"
+          ossutil cp -r . oss://myvip/ --force --include "*.js" --meta "Content-Type:application/javascript"
+          ossutil cp -r . oss://myvip/ --force --include "*.css" --meta "Content-Type:text/css"
+          ossutil cp -r . oss://myvip/ --force --exclude "*.html" --exclude "*.js" --exclude "*.css"
