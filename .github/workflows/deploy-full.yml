@@ -9,7 +9,6 @@ on:
 jobs:
   deploy-frontend:
     runs-on: ubuntu-latest
-    environment: production
     
     steps:
       - name: Checkout code
@@ -42,73 +41,23 @@ jobs:
           
       - name: Install ossutil
         run: |
-          wget https://gosspublic.alicdn.com/ossutil/1.7.19/ossutil64
-          chmod 755 ossutil64
+          # 使用阿里云官方源下载ossutil
+          curl -L -o ossutil64 "https://gosspublic.alicdn.com/ossutil/1.7.18/ossutil64"
+          chmod +x ossutil64
           sudo mv ossutil64 /usr/local/bin/ossutil
           
       - name: Configure ossutil
         run: |
-          ossutil config -e oss-cn-hangzhou.aliyuncs.com -i ${{ secrets.ALIYUN_ACCESS_KEY_ID }} -k ${{ secrets.ALIYUN_ACCESS_KEY_SECRET }}
+          ossutil config -e oss-cn-hangzhou.aliyuncs.com -i ${{ secrets.ALIYUN_ACCESS_KEY_ID }} -k ${{ secrets.ALIYUN_ACCESS_KEY_SECRET }} -L CH
           
-      - name: Deploy HTML files to OSS
+      - name: Deploy to OSS
         run: |
           cd web/dist
-          for file in $(find . -name "*.html"); do
-            ossutil cp "$file" oss://myvip/${file#./} --meta "Content-Type:text/html; charset=utf-8" --force
-          done
-          
-      - name: Deploy JS files to OSS
-        run: |
-          cd web/dist
-          for file in $(find . -name "*.js"); do
-            ossutil cp "$file" oss://myvip/${file#./} --meta "Content-Type:application/javascript" --force
-          done
-          
-      - name: Deploy CSS files to OSS
-        run: |
-          cd web/dist
-          for file in $(find . -name "*.css"); do
-            ossutil cp "$file" oss://myvip/${file#./} --meta "Content-Type:text/css" --force
-          done
-          
-      - name: Deploy other assets to OSS
-        run: |
-          cd web/dist
-          for file in $(find . -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.gif" -o -name "*.svg" -o -name "*.ico" -o -name "*.woff" -o -name "*.woff2" -o -name "*.ttf" -o -name "*.eot" \)); do
-            if [[ "$file" == *"png"* ]]; then
-              content_type="image/png"
-            elif [[ "$file" == *"jpg"* ]] || [[ "$file" == *"jpeg"* ]]; then
-              content_type="image/jpeg"
-            elif [[ "$file" == *"gif"* ]]; then
-              content_type="image/gif"
-            elif [[ "$file" == *"svg"* ]]; then
-              content_type="image/svg+xml"
-            elif [[ "$file" == *"ico"* ]]; then
-              content_type="image/x-icon"
-            elif [[ "$file" == *"woff"* ]]; then
-              content_type="font/woff"
-            elif [[ "$file" == *"woff2"* ]]; then
-              content_type="font/woff2"
-            elif [[ "$file" == *"ttf"* ]]; then
-              content_type="font/ttf"
-            elif [[ "$file" == *"eot"* ]]; then
-              content_type="application/vnd.ms-fontobject"
-            else
-              content_type="application/octet-stream"
-            fi
-            ossutil cp "$file" oss://myvip/${file#./} --meta "Content-Type:${content_type}" --force
-          done
-          
-      - name: Deploy root files
-        run: |
-          cd web/dist
-          for file in $(find . -maxdepth 1 -type f ! -name "*.html" ! -name "*.js" ! -name "*.css"); do
-            ossutil cp "$file" oss://myvip/${file#./} --force
-          done
+          # 使用递归上传，自动设置Content-Type
+          ossutil cp -r . oss://myvip/ --update --jobs 10
 
   deploy-function:
     runs-on: ubuntu-latest
-    environment: production
     
     steps:
       - name: Checkout code
@@ -116,8 +65,9 @@ jobs:
         
       - name: Setup Aliyun CLI
         run: |
-          curl -O https://aliyuncli.alicdn.com/aliyun-cli-linux-latest-amd64.tgz
-          tar -xvf aliyun-cli-linux-latest-amd64.tgz
+          curl -L -o aliyun-cli.tgz "https://aliyuncli.alicdn.com/aliyun-cli-linux-latest-amd64.tgz"
+          tar -xzf aliyun-cli.tgz
+          chmod +x aliyun
           sudo mv aliyun /usr/local/bin/
           
       - name: Configure Aliyun CLI
@@ -135,22 +85,10 @@ jobs:
           
       - name: Update function code
         run: |
-          aliyun fc20220630 UpdateFunction \
-            --region cn-hangzhou \
-            --service-name my-vip-service \
-            --function-name my-vip \
-            --code zipFile@aliyun-fc/function-code.zip
-        env:
-          ALIBABA_CLOUD_ACCESS_KEY_ID: ${{ secrets.ALIYUN_ACCESS_KEY_ID }}
-          ALIBABA_CLOUD_ACCESS_KEY_SECRET: ${{ secrets.ALIYUN_ACCESS_KEY_SECRET }}
-          
-      - name: Update function environment variables
-        run: |
-          aliyun fc20220630 UpdateFunction \
-            --region cn-hangzhou \
-            --service-name my-vip-service \
-            --function-name my-vip \
-            --environment-variables '{"FEISHU_APP_ID":"${{ secrets.VITE_FEISHU_APP_ID }}","FEISHU_APP_SECRET":"${{ secrets.VITE_FEISHU_APP_SECRET }}"}'
+          aliyun fc UpdateFunctionCode \
+            --ServiceName my-vip-service \
+            --FunctionName my-vip \
+            --ZipFile file://aliyun-fc/function-code.zip
         env:
           ALIBABA_CLOUD_ACCESS_KEY_ID: ${{ secrets.ALIYUN_ACCESS_KEY_ID }}
           ALIBABA_CLOUD_ACCESS_KEY_SECRET: ${{ secrets.ALIYUN_ACCESS_KEY_SECRET }}
@@ -158,6 +96,7 @@ jobs:
   notify-success:
     needs: [deploy-frontend, deploy-function]
     runs-on: ubuntu-latest
+    if: success()
     
     steps:
       - name: Success notification
