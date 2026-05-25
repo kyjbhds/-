@@ -88,6 +88,10 @@ function proxyToFeishu(path, method, token, body) {
 
 // 阿里云函数计算 HTTP 触发器标准入口
 exports.handler = async function(event, context) {
+    console.log('=== FC Function Start ===');
+    console.log('Received event:', JSON.stringify(event));
+    console.log('Context:', JSON.stringify(context));
+    
     // 解析请求 - 兼容多种格式
     let request;
     try {
@@ -100,12 +104,19 @@ exports.handler = async function(event, context) {
         request = {};
     }
     
-    // 阿里云HTTP触发器的请求格式
+    console.log('Parsed request:', JSON.stringify(request));
+    
+    // 阿里云HTTP触发器的请求格式 - 支持多种可能的字段名
     const method = request.httpMethod || request.method || 'GET';
-    const path = request.path || request.url || '/';
+    const path = request.path || request.url || request.requestPath || '/';
     const body = request.body || null;
+    const headers = request.headers || {};
+    
+    console.log('Method:', method);
+    console.log('Path:', path);
+    console.log('Headers:', JSON.stringify(headers));
 
-    // 处理路径
+    // 处理路径 - 移除前缀
     let targetPath = path;
     if (targetPath.startsWith('/api/bitable-proxy')) {
         targetPath = targetPath.replace('/api/bitable-proxy', '');
@@ -113,38 +124,74 @@ exports.handler = async function(event, context) {
     if (!targetPath) {
         targetPath = '/';
     }
+    
+    console.log('Target path:', targetPath);
 
     // 健康检查
     if (targetPath === '/' || targetPath === '/health') {
+        console.log('Returning health check');
         return {
             statusCode: 200,
             headers: {
-                'Content-Type': 'application/json; charset=utf-8',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-                'X-Content-Type-Options': 'nosniff'
+                'content-type': 'application/json; charset=utf-8',
+                'access-control-allow-origin': '*',
+                'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
+                'access-control-allow-headers': 'Content-Type, Authorization'
             },
-            body: JSON.stringify({ status: 'ok', message: 'Proxy is running' })
+            body: JSON.stringify({ 
+                status: 'ok', 
+                message: 'Proxy is running',
+                version: '2.0',
+                timestamp: new Date().toISOString()
+            })
+        };
+    }
+
+    // 处理预检请求
+    if (method === 'OPTIONS') {
+        return {
+            statusCode: 200,
+            headers: {
+                'content-type': 'application/json',
+                'access-control-allow-origin': '*',
+                'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
+                'access-control-allow-headers': 'Content-Type, Authorization',
+                'access-control-max-age': '86400'
+            },
+            body: ''
         };
     }
 
     try {
-        const appId = process.env.FEISHU_APP_ID;
-        const appSecret = process.env.FEISHU_APP_SECRET;
+        // 从环境变量获取飞书配置 - 支持多种变量名
+        const appId = process.env.FEISHU_APP_ID || process.env.VITE_FEISHU_APP_ID;
+        const appSecret = process.env.FEISHU_APP_SECRET || process.env.VITE_FEISHU_APP_SECRET;
+        
+        console.log('Environment variables check:');
+        console.log('FEISHU_APP_ID exists:', !!process.env.FEISHU_APP_ID);
+        console.log('VITE_FEISHU_APP_ID exists:', !!process.env.VITE_FEISHU_APP_ID);
+        console.log('FEISHU_APP_SECRET exists:', !!process.env.FEISHU_APP_SECRET);
+        console.log('VITE_FEISHU_APP_SECRET exists:', !!process.env.VITE_FEISHU_APP_SECRET);
+        console.log('Final App ID exists:', !!appId);
+        console.log('Final App Secret exists:', !!appSecret);
 
         if (!appId || !appSecret) {
             return {
                 statusCode: 500,
                 headers: {
-                    'Content-Type': 'application/json; charset=utf-8',
-                    'Access-Control-Allow-Origin': '*'
+                    'content-type': 'application/json; charset=utf-8',
+                    'access-control-allow-origin': '*'
                 },
-                body: JSON.stringify({ error: 'Missing FEISHU credentials' })
+                body: JSON.stringify({ 
+                    error: 'Missing FEISHU credentials',
+                    detail: 'Please set FEISHU_APP_ID and FEISHU_APP_SECRET environment variables'
+                })
             };
         }
 
+        console.log('Getting token...');
         const token = await getTenantAccessToken(appId, appSecret);
+        console.log('Token obtained successfully');
 
         let requestBody = null;
         if (body && method !== 'GET' && method !== 'HEAD') {
@@ -154,8 +201,13 @@ exports.handler = async function(event, context) {
                 requestBody = body;
             }
         }
+        
+        console.log('Request body:', JSON.stringify(requestBody));
+        console.log('Proxying to Feishu path:', targetPath);
 
         const result = await proxyToFeishu(targetPath, method, token, requestBody);
+        console.log('Feishu response status:', result.statusCode);
+        console.log('Feishu response data (first 500 chars):', result.data.substring(0, 500));
 
         // 尝试解析飞书返回的数据
         let responseBody;
@@ -169,11 +221,10 @@ exports.handler = async function(event, context) {
         return {
             statusCode: result.statusCode,
             headers: {
-                'Content-Type': 'application/json; charset=utf-8',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-                'X-Content-Type-Options': 'nosniff'
+                'content-type': 'application/json; charset=utf-8',
+                'access-control-allow-origin': '*',
+                'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
+                'access-control-allow-headers': 'Content-Type, Authorization'
             },
             body: responseBody
         };
@@ -182,12 +233,13 @@ exports.handler = async function(event, context) {
         return {
             statusCode: 500,
             headers: {
-                'Content-Type': 'application/json; charset=utf-8',
-                'Access-Control-Allow-Origin': '*'
+                'content-type': 'application/json; charset=utf-8',
+                'access-control-allow-origin': '*'
             },
             body: JSON.stringify({
                 error: 'Proxy request failed',
-                message: error.message
+                message: error.message,
+                stack: error.stack
             })
         };
     }

@@ -1,0 +1,167 @@
+name: Deploy to Aliyun (Full Stack)
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy-frontend:
+    runs-on: ubuntu-latest
+    environment: production
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+          
+      - name: Install dependencies
+        run: |
+          cd web
+          npm install
+          
+      - name: Build
+        run: |
+          cd web
+          npm run build
+        env:
+          VITE_BASE_TOKEN: ${{ secrets.VITE_BASE_TOKEN }}
+          VITE_FEISHU_APP_ID: ${{ secrets.VITE_FEISHU_APP_ID }}
+          VITE_FEISHU_APP_SECRET: ${{ secrets.VITE_FEISHU_APP_SECRET }}
+          VITE_FEISHU_CHAT_ID: ${{ secrets.VITE_FEISHU_CHAT_ID }}
+          VITE_GLM_API_KEY: ${{ secrets.VITE_GLM_API_KEY }}
+          VITE_ADMIN_PASSWORD: ${{ secrets.VITE_ADMIN_PASSWORD }}
+          VITE_ALIYUN_FC_URL: ${{ secrets.VITE_ALIYUN_FC_URL }}
+          
+      - name: Install ossutil
+        run: |
+          wget https://gosspublic.alicdn.com/ossutil/1.7.19/ossutil64
+          chmod 755 ossutil64
+          sudo mv ossutil64 /usr/local/bin/ossutil
+          
+      - name: Configure ossutil
+        run: |
+          ossutil config -e oss-cn-hangzhou.aliyuncs.com -i ${{ secrets.ALIYUN_ACCESS_KEY_ID }} -k ${{ secrets.ALIYUN_ACCESS_KEY_SECRET }}
+          
+      - name: Deploy HTML files to OSS
+        run: |
+          cd web/dist
+          for file in $(find . -name "*.html"); do
+            ossutil cp "$file" oss://myvip/${file#./} --meta "Content-Type:text/html; charset=utf-8" --force
+          done
+          
+      - name: Deploy JS files to OSS
+        run: |
+          cd web/dist
+          for file in $(find . -name "*.js"); do
+            ossutil cp "$file" oss://myvip/${file#./} --meta "Content-Type:application/javascript" --force
+          done
+          
+      - name: Deploy CSS files to OSS
+        run: |
+          cd web/dist
+          for file in $(find . -name "*.css"); do
+            ossutil cp "$file" oss://myvip/${file#./} --meta "Content-Type:text/css" --force
+          done
+          
+      - name: Deploy other assets to OSS
+        run: |
+          cd web/dist
+          for file in $(find . -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.gif" -o -name "*.svg" -o -name "*.ico" -o -name "*.woff" -o -name "*.woff2" -o -name "*.ttf" -o -name "*.eot" \)); do
+            if [[ "$file" == *"png"* ]]; then
+              content_type="image/png"
+            elif [[ "$file" == *"jpg"* ]] || [[ "$file" == *"jpeg"* ]]; then
+              content_type="image/jpeg"
+            elif [[ "$file" == *"gif"* ]]; then
+              content_type="image/gif"
+            elif [[ "$file" == *"svg"* ]]; then
+              content_type="image/svg+xml"
+            elif [[ "$file" == *"ico"* ]]; then
+              content_type="image/x-icon"
+            elif [[ "$file" == *"woff"* ]]; then
+              content_type="font/woff"
+            elif [[ "$file" == *"woff2"* ]]; then
+              content_type="font/woff2"
+            elif [[ "$file" == *"ttf"* ]]; then
+              content_type="font/ttf"
+            elif [[ "$file" == *"eot"* ]]; then
+              content_type="application/vnd.ms-fontobject"
+            else
+              content_type="application/octet-stream"
+            fi
+            ossutil cp "$file" oss://myvip/${file#./} --meta "Content-Type:${content_type}" --force
+          done
+          
+      - name: Deploy root files
+        run: |
+          cd web/dist
+          for file in $(find . -maxdepth 1 -type f ! -name "*.html" ! -name "*.js" ! -name "*.css"); do
+            ossutil cp "$file" oss://myvip/${file#./} --force
+          done
+
+  deploy-function:
+    runs-on: ubuntu-latest
+    environment: production
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Aliyun CLI
+        run: |
+          curl -O https://aliyuncli.alicdn.com/aliyun-cli-linux-latest-amd64.tgz
+          tar -xvf aliyun-cli-linux-latest-amd64.tgz
+          sudo mv aliyun /usr/local/bin/
+          
+      - name: Configure Aliyun CLI
+        run: |
+          aliyun configure set \
+            --access-key-id ${{ secrets.ALIYUN_ACCESS_KEY_ID }} \
+            --access-key-secret ${{ secrets.ALIYUN_ACCESS_KEY_SECRET }} \
+            --region cn-hangzhou \
+            --mode AK
+          
+      - name: Prepare function code
+        run: |
+          cd aliyun-fc
+          zip -r function-code.zip index.js package.json
+          
+      - name: Update function code
+        run: |
+          aliyun fc20220630 UpdateFunction \
+            --region cn-hangzhou \
+            --service-name my-vip-service \
+            --function-name my-vip \
+            --code zipFile@aliyun-fc/function-code.zip
+        env:
+          ALIBABA_CLOUD_ACCESS_KEY_ID: ${{ secrets.ALIYUN_ACCESS_KEY_ID }}
+          ALIBABA_CLOUD_ACCESS_KEY_SECRET: ${{ secrets.ALIYUN_ACCESS_KEY_SECRET }}
+          
+      - name: Update function environment variables
+        run: |
+          aliyun fc20220630 UpdateFunction \
+            --region cn-hangzhou \
+            --service-name my-vip-service \
+            --function-name my-vip \
+            --environment-variables '{"FEISHU_APP_ID":"${{ secrets.VITE_FEISHU_APP_ID }}","FEISHU_APP_SECRET":"${{ secrets.VITE_FEISHU_APP_SECRET }}"}'
+        env:
+          ALIBABA_CLOUD_ACCESS_KEY_ID: ${{ secrets.ALIYUN_ACCESS_KEY_ID }}
+          ALIBABA_CLOUD_ACCESS_KEY_SECRET: ${{ secrets.ALIYUN_ACCESS_KEY_SECRET }}
+          
+  notify-success:
+    needs: [deploy-frontend, deploy-function]
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Success notification
+        run: |
+          echo "🎉 Deployment completed successfully!"
+          echo "Frontend: https://myvip.oss-cn-hangzhou.aliyuncs.com"
+          echo "API: https://studentowth-api-jlpwzjexhc.cn-hangzhou.fcapp.run"
