@@ -105,6 +105,20 @@ export default function StudentDetail() {
         <InfoCard icon={Calendar} label="最近上课" value={lessons[0]?.上课日期 ? new Date(lessons[0].上课日期).toLocaleDateString('zh-CN') : '无'} />
       </div>
 
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h3 className="text-lg font-semibold mb-4">联系信息</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <p className="text-sm text-gray-500 mb-1">家长联系方式</p>
+            <p className="font-medium">{student.家长联系方式 || '-'}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500 mb-1">地址</p>
+            <p className="font-medium">{student.地址 || '-'}</p>
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h3 className="text-lg font-semibold mb-4">知识点掌握度</h3>

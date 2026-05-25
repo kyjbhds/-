@@ -8,6 +8,7 @@ export interface Student {
   当前状态: string;
   总课时数?: number;
   最近上课日期?: number;
+  地址?: string;
 }
 
 export interface Lesson {
