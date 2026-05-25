@@ -132,87 +132,91 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">仪表盘</h2>
-        <div className="flex gap-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900">仪表盘</h2>
+        <div className="flex gap-2 sm:gap-3 w-full sm:w-auto">
           <Link
             to="/lessons/ai-record"
-            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm sm:text-base"
           >
-            <Sparkles size={20} />
+            <Sparkles size={18} />
             AI智能记录
           </Link>
           <Link
             to="/lessons/record"
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm sm:text-base"
           >
-            <PlusCircle size={20} />
+            <PlusCircle size={18} />
             课后记录
           </Link>
         </div>
       </div>
 
-      <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl shadow-lg p-6 text-white">
+      {/* 快速记录卡片 */}
+      <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl shadow-lg p-4 sm:p-6 text-white">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold mb-2">🚀 快速记录</h3>
-            <p className="text-sm opacity-90">下课了？快速记录本次课程！</p>
+            <h3 className="text-base sm:text-lg font-semibold mb-1">🚀 快速记录</h3>
+            <p className="text-xs sm:text-sm opacity-90">下课了？快速记录本次课程！</p>
           </div>
         </div>
-        <div className="mt-4 grid grid-cols-1 md:grid-cols-5 gap-3">
-          <input
-            type="text"
-            value={quickStudent}
-            onChange={(e) => setQuickStudent(e.target.value)}
-            placeholder="学生姓名"
-            className="px-4 py-2 rounded-lg text-gray-900 placeholder-gray-500"
-          />
-          <select
-            value={quickSubject}
-            onChange={(e) => setQuickSubject(e.target.value)}
-            className="px-4 py-2 rounded-lg text-gray-900"
-          >
-            <option value="数学">数学</option>
-            <option value="物理">物理</option>
-            <option value="化学">化学</option>
-            <option value="生物">生物</option>
-          </select>
-          <input
-            type="text"
-            value={quickTopic}
-            onChange={(e) => setQuickTopic(e.target.value)}
-            placeholder="课程主题（可选）"
-            className="px-4 py-2 rounded-lg text-gray-900 placeholder-gray-500"
-          />
-          <div className="flex items-center gap-2">
-            <span className="text-sm">评分:</span>
-            <div className="flex gap-1">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  key={star}
-                  onClick={() => setQuickScore(star)}
-                  className={`w-8 h-8 rounded font-bold transition-colors ${
-                    star <= quickScore
-                      ? 'bg-yellow-400 text-white'
-                      : 'bg-white/30 text-white hover:bg-white/50'
-                  }`}
-                >
-                  {star}
-                </button>
-              ))}
+        <div className="mt-4 space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
+            <input
+              type="text"
+              value={quickStudent}
+              onChange={(e) => setQuickStudent(e.target.value)}
+              placeholder="学生姓名"
+              className="px-4 py-2 rounded-lg text-gray-900 placeholder-gray-500 text-sm sm:text-base"
+            />
+            <select
+              value={quickSubject}
+              onChange={(e) => setQuickSubject(e.target.value)}
+              className="px-4 py-2 rounded-lg text-gray-900 text-sm sm:text-base"
+            >
+              <option value="数学">数学</option>
+              <option value="物理">物理</option>
+              <option value="化学">化学</option>
+              <option value="生物">生物</option>
+            </select>
+            <input
+              type="text"
+              value={quickTopic}
+              onChange={(e) => setQuickTopic(e.target.value)}
+              placeholder="课程主题（可选）"
+              className="px-4 py-2 rounded-lg text-gray-900 placeholder-gray-500 text-sm sm:text-base"
+            />
+            <div className="flex items-center gap-2">
+              <span className="text-sm">评分:</span>
+              <div className="flex gap-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    onClick={() => setQuickScore(star)}
+                    className={`w-7 h-7 sm:w-8 sm:h-8 rounded font-bold transition-colors text-sm ${
+                      star <= quickScore
+                        ? 'bg-yellow-400 text-white'
+                        : 'bg-white/30 text-white hover:bg-white/50'
+                    }`}
+                  >
+                    {star}
+                  </button>
+                ))}
+              </div>
             </div>
+            <button
+              onClick={handleQuickSave}
+              disabled={saving}
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-gray-100 font-medium disabled:opacity-50 text-sm sm:text-base"
+            >
+              {saveSuccess ? '✓ 已保存' : saving ? '保存中...' : '⚡ 快速保存'}
+            </button>
           </div>
-          <button
-            onClick={handleQuickSave}
-            disabled={saving}
-            className="flex items-center justify-center gap-2 px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-gray-100 font-medium disabled:opacity-50"
-          >
-            {saveSuccess ? '✓ 已保存' : saving ? '保存中...' : '⚡ 快速保存'}
-          </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* 统计卡片 - 手机端2列，桌面端4列 */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         <StatCard title="在读学生" value={stats.totalStudents} icon={Users} color="blue" />
         <StatCard title="本月课时" value={stats.monthlyLessons} icon={BookOpen} color="green" />
         <StatCard title="本月收入" value={`¥${stats.totalIncome}`} icon={TrendingUp} color="purple" />
@@ -311,14 +315,14 @@ function StatCard({ title, value, icon: Icon, color }: {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-gray-500">{title}</p>
-          <p className="text-3xl font-bold mt-1">{value}</p>
+          <p className="text-xs sm:text-sm text-gray-500">{title}</p>
+          <p className="text-xl sm:text-3xl font-bold mt-1">{value}</p>
         </div>
-        <div className={`p-3 rounded-lg ${colorClasses[color]}`}>
-          <Icon size={24} />
+        <div className={`p-2 sm:p-3 rounded-lg ${colorClasses[color]}`}>
+          <Icon size={20} />
         </div>
       </div>
     </div>

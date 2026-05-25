@@ -112,20 +112,20 @@ export default function StudentList() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">学生档案</h2>
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900">学生档案</h2>
+        <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
           <button
             onClick={() => loadStudents()}
-            className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+            className="flex-1 sm:flex-none px-3 sm:px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm sm:text-base"
           >
             刷新列表
           </button>
           <button 
             onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm sm:text-base"
           >
-            <Plus size={20} />
+            <Plus size={18} />
             添加学生
           </button>
         </div>
@@ -176,39 +176,66 @@ export default function StudentList() {
             </button>
           </div>
         ) : (
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">学生姓名</th>
-                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">年级</th>
-                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">科目</th>
-                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">状态</th>
-                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">总课时</th>
-                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">操作</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
+          <>
+            {/* 手机端：卡片布局 */}
+            <div className="sm:hidden divide-y divide-gray-200">
               {filteredStudents.map((student) => (
-                <tr key={student.record_id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 font-medium">{student.学生姓名}</td>
-                  <td className="px-6 py-4">{student.年级}</td>
-                  <td className="px-6 py-4">{student.科目?.join(', ')}</td>
-                  <td className="px-6 py-4">
+                <Link
+                  key={student.record_id}
+                  to={`/students/${student.record_id}`}
+                  className="block p-4 hover:bg-gray-50"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-medium text-gray-900">{student.学生姓名}</span>
                     <StatusBadge status={student.当前状态} />
-                  </td>
-                  <td className="px-6 py-4">{student.总课时数 || 0}</td>
-                  <td className="px-6 py-4">
-                    <Link
-                      to={`/students/${student.record_id}`}
-                      className="text-blue-600 hover:text-blue-700 font-medium"
-                    >
-                      查看详情
-                    </Link>
-                  </td>
-                </tr>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <span>{student.年级 || '-'}</span>
+                    <span>·</span>
+                    <span>{student.科目?.join(', ') || '-'}</span>
+                    <span>·</span>
+                    <span>{student.总课时数 || 0}课时</span>
+                  </div>
+                </Link>
               ))}
-            </tbody>
-          </table>
+            </div>
+            {/* 桌面端：表格布局 */}
+            <div className="hidden sm:block">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">学生姓名</th>
+                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">年级</th>
+                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">科目</th>
+                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">状态</th>
+                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">总课时</th>
+                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">操作</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {filteredStudents.map((student) => (
+                    <tr key={student.record_id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 font-medium">{student.学生姓名}</td>
+                      <td className="px-6 py-4">{student.年级}</td>
+                      <td className="px-6 py-4">{student.科目?.join(', ')}</td>
+                      <td className="px-6 py-4">
+                        <StatusBadge status={student.当前状态} />
+                      </td>
+                      <td className="px-6 py-4">{student.总课时数 || 0}</td>
+                      <td className="px-6 py-4">
+                        <Link
+                          to={`/students/${student.record_id}`}
+                          className="text-blue-600 hover:text-blue-700 font-medium"
+                        >
+                          查看详情
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
 
