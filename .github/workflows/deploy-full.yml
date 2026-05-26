@@ -53,8 +53,10 @@ jobs:
       - name: Deploy to OSS
         run: |
           cd web/dist
-          # 使用递归上传，自动设置Content-Type
+          # 先上传所有文件（递归上传，自动设置Content-Type）
           ossutil cp -r . oss://myvip/ --update --jobs 10
+          # 单独确保index.html的Content-Type正确（防止浏览器下载）
+          ossutil set-meta oss://myvip/index.html "Content-Type:text/html; charset=utf-8" --update
 
   deploy-function:
     runs-on: ubuntu-latest
